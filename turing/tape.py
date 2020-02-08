@@ -19,6 +19,15 @@ BLANK_SYMBOL = ' '
 class Tape:
     offset = 0
 
+    @classmethod
+    def read_file(cls, fh, bs=1024):
+        tape = ''
+        r = fh.read(bs)
+        while r:
+            tape += r
+            r = fh.read(bs)
+        return cls(tape)
+
     def __init__(self, symbols=''):
         if isinstance(symbols, Tape):
             self.tape = symbols.tape
@@ -34,6 +43,9 @@ class Tape:
         to_fix = set(re.findall(r' {8,}', ret))
         for t in sorted(to_fix, key=lambda x: -len(x)):
             ret = ret.replace(t, f"«{len(t)}»")
+        to_fix = set(re.findall(r'[^\w\d \t_-]', ret))
+        for t in to_fix:
+            ret = ret.replace(t, f'\\x{ord(t):02x}')
         return f'##TAPE:{self.offset}##{ret}##'
 
     def __eq__(self, other):
