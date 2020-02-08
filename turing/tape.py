@@ -22,10 +22,14 @@ class Tape:
     @classmethod
     def read_file(cls, fh, bs=1024):
         tape = ''
-        r = fh.read(bs)
+        if 'b' in fh.mode:
+            _read = lambda: fh.read(bs).decode()
+        else:
+            _read = lambda: fh.read(bs)
+        r = _read()
         while r:
             tape += r
-            r = fh.read(bs)
+            r = _read()
         return cls(tape)
 
     def __init__(self, symbols=''):
