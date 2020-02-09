@@ -86,3 +86,12 @@ def test_write_0123(a_tape):
     for i in range(4):
         a_tape[i] = str(i)
     assert str(a_tape).strip() == '0123'
+
+def test_read_write(a_tape):
+    assert a_tape == 'test'
+    assert a_tape.read() == 'test'
+    a_tape.seek(0)
+    a_tape.write('this is a test')
+    assert a_tape.read() == ''
+    a_tape.seek(0)
+    assert a_tape.read() == 'this is a test'

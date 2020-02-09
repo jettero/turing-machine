@@ -40,6 +40,7 @@ class Tape:
             self.offset = symbols.offset
         else:
             self.tape = symbols
+        self.io_pos = 0
 
     def __str__(self):
         return self.tape
@@ -115,3 +116,41 @@ class Tape:
         self.tape = before + symbols + after
 
         log.debug('__setitem__ fin(%s)', repr(self))
+
+    def read(self, bs=-1):
+        """ read from the tape as if it was a filehandle, including a 'bs' (blocksize) param
+
+        if blocksize is negative, read will use the length of the tape for bs instead
+        """
+        start = self.io_pos
+        end = len(self.tape) if bs < 0 else self.io_pos + bs
+        ret = self.tape[start:end]
+        self.io_pos += len(ret)
+        return ret
+
+    def tell(self):
+        """ tell() the position in the tape as if it was a file handle """
+        return self.io_pos
+
+    def seek(self, pos, whence=0):
+        """ attempt to emulate fh.seek(pos, whence=0), particularly this bit:
+
+        * 0 -- start of stream (the default); offset should be zero or positive
+        * 1 -- current stream position; offset may be negative
+        * 2 -- end of stream; offset is usually negative
+
+        """
+        if whence == 0:
+            self.io_pos = pos
+        elif whence == 1:
+            self.io_pos += pos
+        elif whence == 2:
+            self.io_pos = len(self.tape) + pos
+
+    def write(self, blah):
+        """ write to the tape as if it was some ordinary filehandle """
+
+        before = self.tape[:self.io_pos]
+        after  = self.tape[self.io_pos+len(blah):]
+        self.tape = before + blah + after
+        self.io_pos += len(blah)
