@@ -16,6 +16,8 @@ RECORD_SEPARATOR = RS = '\x1e'
 # the example -- it's just easier to read
 BLANK_SYMBOL = ' '
 
+PRINTABLE = bytearray(range(0x20, 0x7e+1)).decode()
+
 class Tape:
     offset = 0
 
@@ -47,7 +49,7 @@ class Tape:
         to_fix = set(re.findall(r' {8,}', ret))
         for t in sorted(to_fix, key=lambda x: -len(x)):
             ret = ret.replace(t, f"«{len(t)}»")
-        to_fix = set(re.findall(r'[^\w\d \t_-]', ret))
+        to_fix = set(re.findall(r'[^'+PRINTABLE+']', ret))
         for t in to_fix:
             ret = ret.replace(t, f'\\x{ord(t):02x}')
         return f'##TAPE:{self.offset}##{ret}##'
