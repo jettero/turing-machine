@@ -4,25 +4,22 @@
 import logging
 
 from .tape import Tape
-from .state import State
+from .state import State, StateList
+from .transition import TransitionFunction
 
 log = logging.getLogger(__name__)
 
 class TuringMachine:
     def __init__(self, tape='', initial_state='init', final_states='final', transition_function=None):
+        if isinstance(transition_function, dict):
+            transition_function = TransitionFunction(transition_function)
+
         self.stepno = 0
         self.tape = Tape(tape)
         self.pos = 0
         self.transition_function = transition_function
-        if isinstance(final_states, (list,tuple)):
-            self.final_states = set(State(x) for x in final_states)
-        elif final_states:
-            self.final_states = set([ final_states ])
-        else:
-            self.final_states = set()
-        self.initial_state = State(initial_state)
-        self.state = self.initial_state
-
+        self.state = self.initial_state = State(initial_state)
+        self.final_states = StateList(final_states)
         log.debug('init( %s )', self)
 
     @property
@@ -57,25 +54,19 @@ class TuringMachine:
             log.debug('step(%d) null-transition', step)
             return
 
-        if isinstance(self.transition_function, dict):
-            # more of a table really …
-            cur_state = self.state
-            next_state = self.transition_function.get(cur_state, cur_state)
+        cur_state = self.state
+        next_state = self.transition_function(cur_state)
 
-            log.debug('step(%d) cur-state: %s; next-state: %s; pos: %d',
-                step, repr(cur_state), repr(next_state), self.pos)
+        log.debug('step(%d) cur-state: %s; next-state: %s; pos: %d',
+            step, repr(cur_state), repr(next_state), self.pos)
 
-            self.write = next_state.tval
+        self.write = next_state.tval
 
-            if next_state.action in ('R', '1', '+', '+1', '>', '→', '->'):
-                self.pos += 1
-                log.debug('step(%d) move right, new-pos: %d', step, self.pos)
+        log.debug('step(%d) next_state.new_pos(%d)', self.pos)
+        self.pos = next_state.new_pos(self.pos)
+        log.debug('step(%d)     --> %d', self.pos)
 
-            elif next_state.action in ('L', '-1', '-', '-1', '<', '←', '<-'):
-                self.pos -= 1
-                log.debug('step(%d) move left, new-pos: %d', step, self.pos)
-
-            self.state = next_state
+        self.state = next_state
 
     @property
     def done(self):

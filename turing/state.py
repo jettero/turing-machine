@@ -1,6 +1,25 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+LEFT  = ('L', '-1', '-', '-1', '<', '←', '<-')
+RIGHT = ('R', '1', '+', '+1', '>', '→', '->')
+
+class StateList:
+    def __init__(self, *args):
+        self.items = set()
+        self.add(*args)
+
+    def add(self, *args):
+        for item in args:
+            if isinstance(item, (list,tuple)):
+                self.add(*item)
+            else:
+                self.items.add(State(item))
+
+    def __iter__(self):
+        for item in self.items:
+            yield item
+
 class State:
     name = tval = action = None
 
@@ -11,6 +30,17 @@ class State:
         self.name = name
         self.tval = tval if tval is None else str(tval)
         self.action = action
+
+    @property
+    def is_left(self):
+        return self.action in LEFT
+
+    @property
+    def is_right(self):
+        return self.action in RIGHT
+
+    def new_pos(self, old_pos):
+        return old_pos + (1 if self.is_right else -1 if self.is_left else 0)
 
     def with_new_tval(self, tval):
         name, _, action = self
