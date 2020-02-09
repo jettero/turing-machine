@@ -20,6 +20,10 @@ class StateList:
         for item in self.items:
             yield item
 
+    def __repr__(self, indent=''):
+        lines = [ indent + repr(x) for x in self.items ]
+        return '\n'.join(lines) + '\n'
+
 class State:
     name = tval = action = None
 

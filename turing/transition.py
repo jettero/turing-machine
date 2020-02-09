@@ -28,8 +28,8 @@ class TransitionFunction:
         for k,v in self.states.items():
             yield k,v
 
-    def __repr__(self):
-        lines = [ 'Transition:' ]
+    def __repr__(self, indent=''):
+        lines = [ indent + 'Transition Function:' ]
         for k,v in self:
-            lines.append(f'  {k!r} → {v!r}')
+            lines.append(indent + f'  {k!r} → {v!r}')
         return '\n'.join(lines) + '\n'

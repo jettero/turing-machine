@@ -79,3 +79,15 @@ class TuringMachine:
             log.debug('done? state=%s != fs=%s => not done', s, fs)
         log.debug('done? not done')
     final = done
+
+    def __repr__(self):
+        lines = [
+            'TuringMachine:',
+            '  Initial State:',
+            f'    {self.initial_state!r}',
+            '',
+            self.transition_function.__repr__(indent='  '),
+            '  Final States:',
+            self.final_states.__repr__(indent='    '),
+        ]
+        return '\n'.join(lines)
