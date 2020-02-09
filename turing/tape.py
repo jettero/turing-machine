@@ -7,10 +7,14 @@ import logging
 log = logging.getLogger(__name__)
 
 NULL = '\x00'
+
 START_OF_TEXT = STX = '\x02'
 END_OF_TEXT = ETX = '\x03'
+
 FILE_SEPARATOR = FS = '\x1c'
+GROUP_SEPARATOR = GS = '\x1d'
 RECORD_SEPARATOR = RS = '\x1e'
+UNIT_SEPARATOR = US = '\x1f'
 
 # NOTE: thought about using NULL or RS or something, but settled on ' ' like
 # the example -- it's just easier to read
@@ -154,3 +158,73 @@ class Tape:
         after  = self.tape[self.io_pos+len(blah):]
         self.tape = before + blah + after
         self.io_pos += len(blah)
+
+def _save_state(state):
+    state = tuple( str(x) for x in state if x is not None )
+    return US.join(state) + US
+
+def save_to_tape(initial, transitions, final):
+    """
+        STX and ETX are meant to indicat the start and stop of some text
+        stream.  Apparently Data link Layer uses it along with Data Link
+        Escape (DLE) to mark frames.  Here, we use it as a kind of frame
+        header for our state table on tape
+
+        The file separator (FS) is meant to separate files in a serial format
+        (like a tape) we use this as part of our footer.
+
+        The group separator (GS) is meant to separate database tables on
+        tapes (or other serial formats). We use this to separate init and
+        final state areas.
+
+        The record separator (RS) might be used between rows of table data.
+        We use it to separate states
+
+        The unit separator (US) was meant to separate fields in a row, which
+        we use to sparate fields in a state (iff there's more than one)
+
+        overall, our format is:
+        STX
+          initial_state RS
+        GS
+          cur_state0 RS next_state0 RS
+          cur_state1 RS next_state2 RS
+          cur_state… RS next_state… RS
+        GS
+          final_state0 RS
+          final_state1 RS
+          final_state… RS
+        ETX
+
+        Again, states are stored like this
+
+        State(init) -> init US
+        State(init, 1) -> init US 1 US
+        State(init, 1, L) -> init US 1 US L US
+    """
+
+    ret = Tape()
+    ret.write(STX)
+
+    # write init state
+    ret.write( _save_state(initial) )
+    ret.write(RS)
+
+    # write transitions
+    ret.write(GS)
+    for k,v in transitions:
+        ret.write( _save_state(k) )
+        ret.write(RS)
+        ret.write( _save_state(v) )
+        ret.write(RS)
+
+    ret.write(GS)
+
+    # write final states
+    for final_item in final:
+        ret.write( _save_state(final_item) )
+        ret.write(RS)
+
+    ret.write(ETX)
+
+    return ret

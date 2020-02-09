@@ -24,3 +24,12 @@ class TransitionFunction:
     __setitem__ = add
     __call__    = __getitem__ = get
 
+    def __iter__(self):
+        for k,v in self.states.items():
+            yield k,v
+
+    def __repr__(self):
+        lines = [ 'Transition:' ]
+        for k,v in self:
+            lines.append(f'  {k!r} → {v!r}')
+        return '\n'.join(lines) + '\n'
