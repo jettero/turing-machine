@@ -11,6 +11,19 @@ from turing.tape import Tape, BLANK_SYMBOL
 log = logging.getLogger(__name__)
 
 class AccessMapItem:
+    """ A container to describe a tape access.
+
+        tape = Tape('test')
+
+        AccessMapItem(2, 's')
+          means: access tape at idx 2
+            and expect to see symbol 's'
+
+        AccessMapItem(2, 4, 'st')
+        AccessMapItem(slice(2,4), 'st') [equiv]
+          means: access the tape at idx slice(2,4)
+            and expect to see symbols 'st'
+    """
     def __init__(self, *a):
         if len(a) == 3:
             self.idx = slice(*a[0:2])
