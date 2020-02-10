@@ -39,13 +39,24 @@ def test_automagic_get_expansion(a_tape):
     assert a_tape == mstr + (BLANK_SYMBOL * (28-4))
 
 def test_automagic_get_negspansion(a_tape):
+    low,high,mstr = _low_high_mstr(a_tape)
+
+    if low > -1:
+        low = -1
+        mstr = ' ' + mstr
+
     assert a_tape[-1] == BLANK_SYMBOL
     assert a_tape[0] == 't'
-    assert a_tape == (BLANK_SYMBOL*1) + 'test'
+    assert a_tape == mstr
+
+    if low > -3:
+        d = abs(-3 + abs(low))
+        low = -3
+        mstr = (' ' * d) + mstr
 
     assert a_tape[-3] == BLANK_SYMBOL
     assert a_tape[0] == 't'
-    assert a_tape == (BLANK_SYMBOL*3) + 'test'
+    assert a_tape == mstr
 
 def test_range_0_to_4(a_tape):
     assert a_tape[0:4] == 'test'
