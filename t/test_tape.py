@@ -8,20 +8,35 @@ from turing.tape import BLANK_SYMBOL
 
 log = logging.getLogger(__name__)
 
+def _low_high_mstr(a_tape):
+    low = 0
+    high = len(a_tape)-1
+    for item in a_tape.access_map:
+        if isinstance(item.idx, slice) and item.idx.start < low:
+            low = item.idx.start
+        elif isinstance(item.idx, int) and item.idx < low:
+            low = item.idx
+    mstr = (' ' * abs(low)) + 'test'
+    return low,high,mstr
+
 def test_basic_get(a_tape):
-    assert len(a_tape) == 4
+    low,high,mstr = _low_high_mstr(a_tape)
+
+    assert len(a_tape) == len(mstr)
     assert a_tape[0] == 't'
     assert a_tape[1] == 'e'
-    assert a_tape == 'test'
+    assert a_tape == mstr
 
 def test_automagic_get_expansion(a_tape):
+    low,high,mstr = _low_high_mstr(a_tape)
+
     assert a_tape[5] == BLANK_SYMBOL
-    assert len(a_tape) == 6
-    assert a_tape == 'test' + (BLANK_SYMBOL*2)
+    assert len(a_tape) == len(mstr) + 2
+    assert a_tape == mstr + (BLANK_SYMBOL*2)
 
     assert a_tape[27] == BLANK_SYMBOL
-    assert len(a_tape) == 28
-    assert a_tape == 'test' + (BLANK_SYMBOL * 24)
+    assert len(a_tape) == len(mstr) + (28-4)
+    assert a_tape == mstr + (BLANK_SYMBOL * (28-4))
 
 def test_automagic_get_negspansion(a_tape):
     assert a_tape[-1] == BLANK_SYMBOL
