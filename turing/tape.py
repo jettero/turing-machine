@@ -121,6 +121,15 @@ class Tape:
 
         log.debug('__setitem__ fin(%s)', repr(self))
 
+    def strip(self, *a, **kw):
+        return self.tape.strip(*a, **kw)
+
+    def rstrip(self, *a, **kw):
+        return self.tape.rstrip(*a, **kw)
+
+    def lstrip(self, *a, **kw):
+        return self.tape.lstrip(*a, **kw)
+
     def read(self, bs=-1):
         """ read from the tape as if it was a filehandle, including a 'bs' (blocksize) param
 
