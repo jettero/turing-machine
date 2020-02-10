@@ -51,7 +51,9 @@ class AccessMapList(list):
 ACCESS_MAP = OrderedDict()
 ACCESS_MAP['boring tape']   = AccessMapList()
 ACCESS_MAP['accessed tape'] = AccessMapList( AccessMapItem(2, 's') )
-ACCESS_MAP['sliced tape']   = AccessMapList( AccessMapItem(slice(2,4), 'st') )
+ACCESS_MAP['sliced tape']   = AccessMapList( AccessMapItem(2,4, 'st') )
+ACCESS_MAP['backwards1']    = AccessMapList( AccessMapItem(-2, ' ') )
+ACCESS_MAP['backwards2']    = AccessMapList( AccessMapItem(-5, -2, '   ') )
 
 @pytest.fixture(scope='function', params=ACCESS_MAP.values(), ids=ACCESS_MAP.keys())
 def a_tape(request):
