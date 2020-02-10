@@ -58,6 +58,7 @@ ACCESS_MAP['backwards2']    = AccessMapList( AccessMapItem(-5, -2, '   ') )
 @pytest.fixture(scope='function', params=ACCESS_MAP.values(), ids=ACCESS_MAP.keys())
 def a_tape(request):
     tape = Tape('test')
+    tape.access_map = request.param
     log.debug("created a tape %s", repr(tape))
     for item in request.param:
         log.debug('fixture factory tape access %s', item)
