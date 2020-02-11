@@ -20,7 +20,8 @@ UNIT_SEPARATOR = US = '\x1f'
 # the example -- it's just easier to read
 BLANK_SYMBOL = ' '
 
-PRINTABLE = bytearray(range(0x20, 0x7e+1)).decode()
+PRINTABLE = bytearray(range(0x20, 0x7e+1)).decode() \
+          + '«»'
 
 class Tape:
     offset = 0
