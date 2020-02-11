@@ -10,13 +10,28 @@ log = logging.getLogger(__name__)
 
 def _low_high_mstr(a_tape):
     low = 0
-    high = len(a_tape)-1
+    high = 3
+    mstr = 'test'
     for item in a_tape.access_map:
-        if isinstance(item.idx, slice) and item.idx.start < low:
-            low = item.idx.start
-        elif isinstance(item.idx, int) and item.idx < low:
-            low = item.idx
-    mstr = (' ' * abs(low)) + 'test'
+        if isinstance(item.idx, slice):
+            if item.idx.start < low:
+                low = item.idx.start
+                log.debug('_lhm slc low=%d', low)
+            elif item.idx.stop-1 > high:
+                high = item.idx.stop-1
+                log.debug('_lhm slc high=%d', high)
+        elif isinstance(item.idx, int):
+            if item.idx < low:
+                low = item.idx
+                log.debug('_lhm idx low=%d', low)
+            elif item.idx > high:
+                high = item.idx
+                log.debug('_lhm idx high=%d', high)
+    if high > 3:
+        mstr += ' ' * (high-3)
+    mstr = (' ' * abs(low)) + mstr
+    log.debug('_lhm fin low=%d high=%d tape=%s mstr="%s"',
+        low, high, repr(a_tape), mstr)
     return low,high,mstr
 
 def test_basic_get(a_tape):
@@ -30,13 +45,12 @@ def test_basic_get(a_tape):
 def test_automagic_get_expansion(a_tape):
     low,high,mstr = _low_high_mstr(a_tape)
 
-    assert a_tape[5] == BLANK_SYMBOL
-    assert len(a_tape) == len(mstr) + 2
-    assert a_tape == mstr + (BLANK_SYMBOL*2)
-
-    assert a_tape[27] == BLANK_SYMBOL
-    assert len(a_tape) == len(mstr) + (28-4)
-    assert a_tape == mstr + (BLANK_SYMBOL * (28-4))
+    for ap in (27, 50, 113):
+        lap = (ap-high)
+        lmp = len(mstr) + lap
+        assert a_tape[ap] == BLANK_SYMBOL
+        assert len(a_tape) == lmp
+        assert a_tape == mstr + (BLANK_SYMBOL * lap)
 
 def test_automagic_get_negspansion(a_tape):
     low,high,mstr = _low_high_mstr(a_tape)
@@ -126,15 +140,16 @@ def test_write_to_tape_at_neg4_1(a_tape):
     # and the text we keep after the range is:
     #   after = [4:] = " test"
 
-    if not mstr.startswith(' '):
-        mstr = ' test'
-    for i in range(3,-1,-1):
-        j = (' ' * i) + ' test'
-        if j in mstr:
-            pstr = mstr
-            mstr = mstr.replace(j, 'zoot suit test')
-            log.debug('i=%d j="%s" mstr="%s" -> "%s"', i, j, pstr, mstr)
-            break
+    if mstr.startswith('test'):
+        mstr = 'zoot suit ' + mstr
+    else:
+        for i in range(3,-1,-1):
+            j = (' ' * i) + ' test'
+            if j in mstr:
+                pstr = mstr
+                mstr = mstr.replace(j, 'zoot suit test')
+                log.debug('i=%d j="%s" mstr="%s" -> "%s"', i, j, pstr, mstr)
+                break
 
     a_tape[-4:-1] = 'zoot suit'
     assert a_tape == mstr
@@ -143,6 +158,12 @@ def test_write_0123(a_tape):
     for i in range(4):
         a_tape[i] = str(i)
     assert str(a_tape).strip() == '0123'
+
+def test_write_10_10(a_tape):
+    low,high,mstr = _low_high_mstr(a_tape)
+    a_tape[-10] = 'GOOM'
+    a_tape[+10] = 'GOOM'
+    assert a_tape == 'GOOM' +(' '*9)+ 'test' +(' '*6)+ 'GOOM'
 
 def test_read_write(a_tape):
     low,high,mstr = _low_high_mstr(a_tape)
@@ -154,3 +175,12 @@ def test_read_write(a_tape):
     assert a_tape.read() == ''
     a_tape.seek(0)
     assert a_tape.read() == 'this is a test'
+
+# def test_replace(a_tape):
+#     a_tape[-10] = 'test'
+#     a_tape[+10] = 'test'
+
+#     a_tape.replace('test', 'tast')
+#     mstr = mstr.replace('test', 'tast')
+
+#     assert a_tape == mstr

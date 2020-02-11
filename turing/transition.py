@@ -21,12 +21,13 @@ class TransitionFunction:
             default = cur_state
         return self.states.get(cur_state, default)
 
-    __setitem__ = add
-    __call__    = __getitem__ = get
-
-    def __iter__(self):
+    def items(self):
         for k,v in self.states.items():
             yield k,v
+
+    __setitem__ = add
+    __call__    = __getitem__ = get
+    __iter__    = items
 
     def __repr__(self, indent=''):
         lines = [ indent + 'Transition Function:' ]

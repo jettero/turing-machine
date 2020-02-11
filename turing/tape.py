@@ -184,11 +184,26 @@ class Tape:
         self.tape = before + blah + after
         self.io_pos += len(blah)
 
+    def replace(self, pattern, replacement):
+        """ replace pattern with replacement in the internal tape and re-adjust
+            the offset appropriately
+        """
+
+        # create silly string
+        mark = NULL + "xXx" + NULL
+        if mark in self.tape:
+            raise ValueError('unexpected silly string')
+
+        self[0:0] = mark
+        tmp = self.tape.replace(pattern, replacement)
+        self.offset = tmp.index(mark)
+        self.tape = tmp.replace(mark, '')
+
 def _save_state(state):
     state = tuple( str(x) for x in state if x is not None )
     return US.join(state) + US
 
-def save_to_tape(initial, transitions, final):
+def save_to_tape(initial, transitions, final, debug_control_codes=False):
     """
         STX and ETX are meant to indicat the start and stop of some text
         stream.  Apparently Data link Layer uses it along with Data Link
@@ -210,22 +225,22 @@ def save_to_tape(initial, transitions, final):
 
         overall, our format is:
         STX
-          initial_state RS
+          initial_state
         GS
           cur_state0 RS next_state0 RS
           cur_state1 RS next_state2 RS
-          cur_state… RS next_state… RS
+          cur_state… RS next_state…
         GS
           final_state0 RS
           final_state1 RS
-          final_state… RS
+          final_state…
         ETX
 
         Again, states are stored like this
 
-        State(init) -> init US
-        State(init, 1) -> init US 1 US
-        State(init, 1, L) -> init US 1 US L US
+        State(init) -> init
+        State(init, 1) -> init US 1
+        State(init, 1, L) -> init US 1 US L
     """
 
     ret = Tape()
@@ -233,23 +248,23 @@ def save_to_tape(initial, transitions, final):
 
     # write init state
     ret.write( _save_state(initial) )
-    ret.write(RS)
+    ret.write(GS)
 
     # write transitions
-    ret.write(GS)
-    for k,v in transitions:
-        ret.write( _save_state(k) )
-        ret.write(RS)
-        ret.write( _save_state(v) )
-        ret.write(RS)
-
+    ret.write(RS.join([ RS.join([ _save_state(x) for x in item ])
+        for item in transitions.items() ]))
     ret.write(GS)
 
     # write final states
-    for final_item in final:
-        ret.write( _save_state(final_item) )
-        ret.write(RS)
-
+    ret.write( RS.join([ _save_state(x) for x in final ]) )
     ret.write(ETX)
+
+    if debug_control_codes:
+        ret = \
+        ret.replace(STX, '<STX>') \
+           .replace(ETX, '<ETX>') \
+           .replace(GS,  '<GS>') \
+           .replace(RS,  '<RS>') \
+           .replace(US,  '<US>')
 
     return ret
