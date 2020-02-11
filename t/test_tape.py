@@ -126,6 +126,8 @@ def test_write_to_tape_at_neg4_1(a_tape):
     # and the text we keep after the range is:
     #   after = [4:] = " test"
 
+    if not mstr.startswith(' '):
+        mstr = ' test'
     for i in range(3,-1,-1):
         j = (' ' * i) + ' test'
         if j in mstr:
@@ -143,8 +145,10 @@ def test_write_0123(a_tape):
     assert str(a_tape).strip() == '0123'
 
 def test_read_write(a_tape):
-    assert a_tape == 'test'
-    assert a_tape.read() == 'test'
+    low,high,mstr = _low_high_mstr(a_tape)
+
+    assert a_tape == mstr
+    assert a_tape.read() == mstr
     a_tape.seek(0)
     a_tape.write('this is a test')
     assert a_tape.read() == ''
