@@ -66,15 +66,25 @@ class Tape:
         return len(self.tape)
 
     def _offset_idx(self, idx):
-        log.debug('_offset_idx %s idx=%s [input]', repr(self), repr(idx))
+        orig = idx
         if isinstance(idx, slice):
             nstart = 0 if idx.start is None else idx.start + self.offset
             nstop  = len(self.tape) if idx.stop is None else idx.stop + self.offset
             idx = slice(nstart, nstop, idx.step)
+            log.debug('_offset_idx (%s+%s or 0):(%s+%s or %d) -> %s',
+                orig.start, self.offset,
+                orig.stop , self.offset,
+                len(self.tape),
+                repr(idx)
+            )
+
         else:
             idx += self.offset
             idx = slice(idx, idx+1, None)
-        log.debug('_offset_idx %s idx=%s [offset]', repr(self), repr(idx))
+            log.debug('_offset_idx %d+%d -> %s',
+                orig, self.offset,
+                repr(idx)
+            )
         return idx
 
     def __getitem__(self, idx, crash_if_recurse=False, already_offset=False):
@@ -87,14 +97,14 @@ class Tape:
         if idx.stop > len(self.tape):
             d = (idx.stop - len(self.tape))
             self.tape += BLANK_SYMBOL * d
-            log.debug('__getitem__ idx.stop > len(self.tape); extended tape: %s', self)
+            log.debug('__getitem__0 idx.stop > len(self.tape); extended tape: %s', self)
             extended_tape = True
 
         if idx.start < 0:
             adx = abs(idx.start)
             self.tape = (BLANK_SYMBOL * adx) + self.tape
             self.offset += adx
-            log.debug('__getitem__ idx.start < 0; extended tape: %s', self)
+            log.debug('__getitem__1 idx.start < 0; extended tape: %s', self)
             extended_tape = True
 
         if extended_tape:
@@ -102,24 +112,29 @@ class Tape:
                 raise Exception('internal error (probably): recursion shoud not happen here')
             return self.__getitem__(input_idx, crash_if_recurse=True)
 
-        log.debug('__getitem__ fin(%s)', self.tape[idx])
+        log.debug('__getitem__F %s[%s] --> "%s"', repr(self), repr(input_idx), self.tape[idx])
         return self.tape[idx]
 
     def __setitem__(self, idx, symbols):
-        log.debug('__setitem__ %s [%s] <= %s', repr(self), repr(idx), symbols)
+        log.debug('__setitem__0 %s[%s] <= %s', repr(self), repr(idx), symbols)
 
-        self.__getitem__(idx)
+        got = self[idx] # potentially expand tape
+        log.debug('__setitem__1 got="%s" for [%s]', got, repr(idx))
+
         idx = self._offset_idx(idx)
+        if idx.start < 0:
+            by = abs(idx.start)
+            log.debug('__setitem__2 extend tape by=%d', by)
+            self.offset += by
+            self.tape = symbols + self.tape
 
-        before = self.tape[:idx.start]
-        after  = self.tape[idx.stop:]
+        else:
+            before = self.tape[:idx.start]
+            after  = self.tape[idx.stop:]
+            log.debug('__setitem__3 before="%s" + symbols="%s" + after="%s"', before, symbols, after)
+            self.tape = before + symbols + after
 
-        log.debug('__setitem__ %s [%d:%d] => "%s" + "%s" + "%s"',
-            repr(self), idx.start, idx.stop, before, symbols, after)
-
-        self.tape = before + symbols + after
-
-        log.debug('__setitem__ fin(%s)', repr(self))
+        log.debug('__setitem__F %s', repr(self))
 
     def strip(self, *a, **kw):
         return self.tape.strip(*a, **kw)

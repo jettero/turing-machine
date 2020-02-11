@@ -91,22 +91,51 @@ def test_range_neg2_to_pls2(a_tape):
     assert a_tape[-2:2] == '  te'
 
 def test_write_to_tape(a_tape):
+    low,high,mstr = _low_high_mstr(a_tape)
+
     a_tape[2] = 'X'
-    assert a_tape == 'teXt'
+    assert a_tape == mstr.replace('test', 'teXt')
 
     a_tape[2] = 'XX'
-    assert a_tape == 'teXXt'
+    assert a_tape == mstr.replace('test', 'teXXt')
 
     a_tape[1:3] = 'YY'
-    assert a_tape == 'tYYXt'
+    assert a_tape == mstr.replace('test', 'tYYXt')
 
 def test_write_to_tape_at_neg1(a_tape):
+    low,high,mstr = _low_high_mstr(a_tape)
+
     a_tape[-1] = 'Z'
-    assert a_tape == 'Ztest'
+    assert a_tape == mstr.replace('test', 'Ztest').replace(' Ztest', 'Ztest')
 
-def test_write_to_tape_at_neg1(a_tape):
+def test_write_to_tape_at_neg4_1(a_tape):
+    low,high,mstr = _low_high_mstr(a_tape)
+
+    # suppose we have this string
+    # "     test"
+    #  ⁵⁴³²¹0123  # pretend tape indexes (superscript being negative)
+    #  012345678  # actual tape indexes
+
+    # if our write is a_tape[-4:-1] = "zoot suit":
+    # then our pretend to actual conversion is:
+    # -4:-1 -> 1:4
+    #
+    # The text we need to keep from before the range is:
+    # before = [:1] = " "
+    #
+    # and the text we keep after the range is:
+    #   after = [4:] = " test"
+
+    for i in range(3,-1,-1):
+        j = (' ' * i) + ' test'
+        if j in mstr:
+            pstr = mstr
+            mstr = mstr.replace(j, 'zoot suit test')
+            log.debug('i=%d j="%s" mstr="%s" -> "%s"', i, j, pstr, mstr)
+            break
+
     a_tape[-4:-1] = 'zoot suit'
-    assert a_tape == 'zoot suit test'
+    assert a_tape == mstr
 
 def test_write_0123(a_tape):
     for i in range(4):
